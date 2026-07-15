@@ -53,7 +53,10 @@ class ProductionLineWorker:
 
     def _complete(self, job) -> None:
         order = self._order_repository.get(job.order_id)
-        self._sample_repository.update_stock(order.sample_id, job.actual_qty)
+        # Produce the full batch (actual_qty), then consume this order's qty from it —
+        # net change leaves only the yield-loss surplus in stock, matching the
+        # immediate stock_qty -= order.qty done at approval time for the sufficient-stock path.
+        self._sample_repository.update_stock(order.sample_id, job.actual_qty - order.qty)
         self._order_repository.update_status(job.order_id, OrderStatus.CONFIRMED)
 
     def current_status(self) -> dict | None:

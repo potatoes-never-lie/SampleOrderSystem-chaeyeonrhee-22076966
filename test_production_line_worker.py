@@ -44,7 +44,7 @@ def test_process_next_completes_job_and_updates_order_and_stock(tmp_path):
     updated_order = order_repo.get(order.id)
     updated_sample = sample_repo.get(sample.id)
     assert updated_order.status == OrderStatus.CONFIRMED
-    assert updated_sample.stock_qty == 30 + 63
+    assert updated_sample.stock_qty == 30 + 63 - 80
     assert queue_repo.list_pending() == []
     assert worker.current_status() is None
 
@@ -87,4 +87,4 @@ def test_start_and_stop_processes_queued_job_in_background(tmp_path):
     worker.stop()
 
     assert order_repo.get(order.id).status == OrderStatus.CONFIRMED
-    assert sample_repo.get(sample.id).stock_qty == 12
+    assert sample_repo.get(sample.id).stock_qty == 12 - 10
