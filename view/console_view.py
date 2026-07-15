@@ -1,4 +1,15 @@
+import sys
+
 from model.sample_id_format import format_sample_id
+
+# Windows consoles often default to a non-UTF-8 codepage (e.g. cp949), which
+# both garbles Korean output and can raise UnicodeEncodeError on input() for
+# Korean text. Force UTF-8 on both streams so console I/O is consistent
+# regardless of the host codepage.
+if sys.stdout.encoding is not None and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
+if sys.stdin.encoding is not None and sys.stdin.encoding.lower() != "utf-8":
+    sys.stdin.reconfigure(encoding="utf-8")
 
 MENU_TEXT = """
 1. List items
