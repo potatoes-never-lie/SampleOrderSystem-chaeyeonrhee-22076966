@@ -15,6 +15,10 @@ class ProductionQueueRepository(ABC):
     def list_pending(self) -> list[ProductionJob]:
         ...
 
+    @abstractmethod
+    def dequeue(self, job_id: int) -> None:
+        ...
+
 
 class SqliteProductionQueueRepository(ProductionQueueRepository):
     def __init__(self, path: str = "data/sampleorder.db") -> None:
@@ -48,3 +52,9 @@ class SqliteProductionQueueRepository(ProductionQueueRepository):
             "FROM production_queue ORDER BY id ASC"
         ).fetchall()
         return [ProductionJob(*row) for row in rows]
+
+    def dequeue(self, job_id: int) -> None:
+        cursor = self._conn.execute("DELETE FROM production_queue WHERE id = ?", (job_id,))
+        self._conn.commit()
+        if cursor.rowcount == 0:
+            raise KeyError(job_id)

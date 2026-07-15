@@ -1,3 +1,5 @@
+import pytest
+
 from model.production_job import ProductionJob
 from model.production_queue_repository import SqliteProductionQueueRepository
 
@@ -41,3 +43,19 @@ def test_list_pending_preserves_job_fields(tmp_path):
     assert pending[0].shortage_qty == 20
     assert pending[0].actual_qty == 22
     assert pending[0].total_time == 11.0
+
+
+def test_dequeue_removes_job_from_pending(tmp_path):
+    repo = _repo(tmp_path)
+    job = repo.enqueue(_job(order_id=1))
+    repo.enqueue(_job(order_id=2))
+
+    repo.dequeue(job.id)
+
+    assert [j.order_id for j in repo.list_pending()] == [2]
+
+
+def test_dequeue_raises_for_unknown_job(tmp_path):
+    repo = _repo(tmp_path)
+    with pytest.raises(KeyError):
+        repo.dequeue(999)
