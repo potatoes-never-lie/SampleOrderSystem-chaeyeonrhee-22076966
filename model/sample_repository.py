@@ -3,6 +3,7 @@ import sqlite3
 from abc import ABC, abstractmethod
 
 from model.sample import Sample
+from model.sample_id_format import parse_sample_id
 
 
 class SampleRepository(ABC):
@@ -76,10 +77,18 @@ class SqliteSampleRepository(SampleRepository):
         return [Sample(*row) for row in rows]
 
     def search_by_name(self, keyword: str) -> list[Sample]:
-        rows = self._conn.execute(
-            "SELECT id, name, avg_production_time, yield_rate, stock_qty FROM samples WHERE name LIKE ?",
-            (f"%{keyword}%",),
-        ).fetchall()
+        sample_id = parse_sample_id(keyword)
+        if sample_id is not None:
+            rows = self._conn.execute(
+                "SELECT id, name, avg_production_time, yield_rate, stock_qty FROM samples "
+                "WHERE name LIKE ? OR id = ?",
+                (f"%{keyword}%", sample_id),
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT id, name, avg_production_time, yield_rate, stock_qty FROM samples WHERE name LIKE ?",
+                (f"%{keyword}%",),
+            ).fetchall()
         return [Sample(*row) for row in rows]
 
     def update_stock(self, sample_id: int, delta: int) -> Sample:

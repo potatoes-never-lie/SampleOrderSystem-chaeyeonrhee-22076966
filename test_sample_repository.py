@@ -64,3 +64,41 @@ def test_update_stock_rejects_negative_result(tmp_path):
     sample = repo.add(Sample(id=None, name="A", avg_production_time=0.1, yield_rate=0.9, stock_qty=3))
     with pytest.raises(ValueError):
         repo.update_stock(sample.id, -4)
+
+
+def test_search_by_name_matches_sample_id_dash_format(tmp_path):
+    repo = _repo(tmp_path)
+    repo.add(Sample(id=None, name="실리콘 웨이퍼-8인치", avg_production_time=0.5, yield_rate=0.92, stock_qty=0))
+    target = repo.add(Sample(id=None, name="포토레지스트-PR7", avg_production_time=0.2, yield_rate=0.95, stock_qty=0))
+
+    results = repo.search_by_name(f"S-{target.id:03d}")
+
+    assert [s.id for s in results] == [target.id]
+
+
+def test_search_by_name_matches_plain_numeric_id(tmp_path):
+    repo = _repo(tmp_path)
+    target = repo.add(Sample(id=None, name="A", avg_production_time=0.1, yield_rate=0.9, stock_qty=0))
+
+    results = repo.search_by_name(str(target.id))
+
+    assert [s.id for s in results] == [target.id]
+
+
+def test_search_by_name_does_not_duplicate_when_name_and_id_both_match(tmp_path):
+    repo = _repo(tmp_path)
+    sample = repo.add(Sample(id=None, name="1", avg_production_time=0.1, yield_rate=0.9, stock_qty=0))
+
+    results = repo.search_by_name("1")
+
+    assert len(results) == 1
+    assert results[0].id == sample.id
+
+
+def test_search_by_name_still_matches_partial_name_when_not_an_id(tmp_path):
+    repo = _repo(tmp_path)
+    repo.add(Sample(id=None, name="산화막 웨이퍼-SiO2", avg_production_time=0.6, yield_rate=0.88, stock_qty=0))
+
+    results = repo.search_by_name("웨이퍼")
+
+    assert len(results) == 1
