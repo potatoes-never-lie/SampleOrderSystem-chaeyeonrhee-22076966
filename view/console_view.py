@@ -156,3 +156,28 @@ def show_pending_queue(entries: list) -> None:
             f"[{idx}] 주문번호 {order.order_no} | 부족분 {job.shortage_qty}ea "
             f"| 실생산량 {job.actual_qty}ea | 예상소요 {job.total_time:.1f}min"
         )
+
+
+MONITOR_MENU_TEXT = """
+1. 주문량 확인
+2. 재고량 확인
+0. 뒤로
+"""
+
+
+def prompt_monitor_menu() -> str:
+    print(MONITOR_MENU_TEXT)
+    return input("선택 > ")
+
+
+def show_order_counts(counts: list) -> None:
+    for status, count in counts:
+        print(f"{status.value}: {count}건")
+
+
+def show_inventory_status(entries: list) -> None:
+    for sample, demand, state in entries:
+        print(
+            f"[{format_sample_id(sample.id)}] {sample.name} | 재고 {sample.stock_qty}ea "
+            f"| 주문대비 수요 {demand}ea | 상태 {state}"
+        )
