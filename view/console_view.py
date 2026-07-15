@@ -192,3 +192,25 @@ RELEASE_MENU_TEXT = """
 def prompt_release_menu() -> str:
     print(RELEASE_MENU_TEXT)
     return input("선택 > ")
+
+
+MAIN_MENU_TEXT = """
+[1] 시료 관리      [2] 시료 주문
+[3] 주문 승인/거절 [4] 모니터링
+[5] 생산라인 조회  [6] 출고 처리
+[0] 종료
+"""
+
+
+def show_main_summary(summary: dict) -> None:
+    print("=" * 60)
+    print("반도체 시료 생산주문관리 시스템")
+    print(f"등록 시료 {summary['sample_count']}종   총 재고 {summary['total_stock']}ea")
+    print(f"전체 주문 {summary['order_count']}건   생산라인 {summary['pending_production']}건 대기")
+    print("=" * 60)
+
+
+def prompt_main_menu(summary: dict) -> str:
+    show_main_summary(summary)
+    print(MAIN_MENU_TEXT)
+    return input("선택 > ")
