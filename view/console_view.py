@@ -150,6 +150,12 @@ def prompt_production_menu() -> str:
     return input("선택 > ")
 
 
+def show_section(title: str) -> None:
+    print("-" * 40)
+    print(title)
+    print("-" * 40)
+
+
 def show_production_status(job, order, sample, progress: float) -> None:
     print(
         f"주문번호 {order.order_no} | 시료 {format_sample_id(sample.id)} {sample.name} "

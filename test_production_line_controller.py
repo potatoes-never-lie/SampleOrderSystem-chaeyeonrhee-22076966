@@ -29,6 +29,10 @@ class _FakeView:
         self.messages = []
         self.status_calls = []
         self.pending_calls = None
+        self.sections = []
+
+    def show_section(self, title):
+        self.sections.append(title)
 
     def show_message(self, msg):
         self.messages.append(msg)
@@ -52,6 +56,7 @@ def test_show_status_reports_idle_and_lists_pending_queue():
     assert controller._view.messages == ["현재 생산 중인 작업이 없습니다."]
     assert controller._view.status_calls == []
     assert controller._view.pending_calls == [(job, order)]
+    assert controller._view.sections == ["생산 현황", "대기 주문"]
 
 
 def test_show_status_reports_current_job_progress_and_pending_queue():
@@ -71,3 +76,4 @@ def test_show_status_reports_current_job_progress_and_pending_queue():
 
     assert controller._view.status_calls == [(current_job, current_order, sample, 0.4)]
     assert controller._view.pending_calls == [(pending_job, pending_order)]
+    assert controller._view.sections == ["생산 현황", "대기 주문"]
