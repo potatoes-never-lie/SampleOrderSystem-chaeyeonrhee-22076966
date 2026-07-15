@@ -77,3 +77,21 @@ def show_samples(samples: list) -> None:
             f"[{format_sample_id(sample.id)}] {sample.name} | 평균생산시간 {sample.avg_production_time}min/ea "
             f"| 수율 {sample.yield_rate} | 재고 {sample.stock_qty}ea"
         )
+
+
+ORDER_MENU_TEXT = """
+1. 시료 주문
+0. 뒤로
+"""
+
+
+def prompt_order_menu() -> str:
+    print(ORDER_MENU_TEXT)
+    return input("선택 > ")
+
+
+def prompt_order_input() -> dict:
+    sample_id = input("시료 ID: ")
+    customer_name = input("고객명: ")
+    qty = input("주문 수량: ")
+    return {"sample_id": sample_id, "customer_name": customer_name, "qty": qty}
