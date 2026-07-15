@@ -181,3 +181,14 @@ def show_inventory_status(entries: list) -> None:
             f"[{format_sample_id(sample.id)}] {sample.name} | 재고 {sample.stock_qty}ea "
             f"| 주문대비 수요 {demand}ea | 상태 {state}"
         )
+
+
+RELEASE_MENU_TEXT = """
+1. 출고 처리
+0. 뒤로
+"""
+
+
+def prompt_release_menu() -> str:
+    print(RELEASE_MENU_TEXT)
+    return input("선택 > ")
