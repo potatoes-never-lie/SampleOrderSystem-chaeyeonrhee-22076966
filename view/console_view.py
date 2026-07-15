@@ -95,3 +95,34 @@ def prompt_order_input() -> dict:
     customer_name = input("고객명: ")
     qty = input("주문 수량: ")
     return {"sample_id": sample_id, "customer_name": customer_name, "qty": qty}
+
+
+APPROVAL_MENU_TEXT = """
+1. 주문 승인/거절
+0. 뒤로
+"""
+
+
+def prompt_approval_menu() -> str:
+    print(APPROVAL_MENU_TEXT)
+    return input("선택 > ")
+
+
+def show_order_list(orders: list) -> None:
+    for idx, order in enumerate(orders, start=1):
+        print(
+            f"[{idx}] {order.order_no} | 시료 {format_sample_id(order.sample_id)} "
+            f"| 고객 {order.customer_name} | 수량 {order.qty}ea | 상태 {order.status.value}"
+        )
+
+
+def prompt_order_selection(count: int) -> int | None:
+    raw = input(f"승인/거절할 번호 (1-{count}) > ")
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
+def prompt_approval_decision() -> str:
+    return input("[Y] 승인  [N] 거절 > ")
