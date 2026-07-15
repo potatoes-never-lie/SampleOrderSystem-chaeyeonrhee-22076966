@@ -126,3 +126,33 @@ def prompt_order_selection(count: int) -> int | None:
 
 def prompt_approval_decision() -> str:
     return input("[Y] 승인  [N] 거절 > ")
+
+
+PRODUCTION_MENU_TEXT = """
+1. 생산 라인 조회
+0. 뒤로
+"""
+
+
+def prompt_production_menu() -> str:
+    print(PRODUCTION_MENU_TEXT)
+    return input("선택 > ")
+
+
+def show_production_status(job, order, sample, progress: float) -> None:
+    print(
+        f"주문번호 {order.order_no} | 시료 {format_sample_id(sample.id)} {sample.name} "
+        f"| 부족분 {job.shortage_qty}ea → 실생산량 {job.actual_qty}ea "
+        f"| 진행률 {progress * 100:.0f}%"
+    )
+
+
+def show_pending_queue(entries: list) -> None:
+    if not entries:
+        print("(대기 중인 생산 작업 없음)")
+        return
+    for idx, (job, order) in enumerate(entries, start=1):
+        print(
+            f"[{idx}] 주문번호 {order.order_no} | 부족분 {job.shortage_qty}ea "
+            f"| 실생산량 {job.actual_qty}ea | 예상소요 {job.total_time:.1f}min"
+        )
