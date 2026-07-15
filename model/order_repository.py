@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import threading
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -31,7 +32,11 @@ class OrderRepository(ABC):
 class SqliteOrderRepository(OrderRepository):
     def __init__(self, path: str = "data/sampleorder.db") -> None:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-        self._conn = sqlite3.connect(path)
+        # check_same_thread=False + a per-instance lock: the production line
+        # background thread (Phase 5) and the console's main thread both call
+        # into this same repository instance.
+        self._conn = sqlite3.connect(path, check_same_thread=False)
+        self._lock = threading.Lock()
         self._conn.execute(
             "CREATE TABLE IF NOT EXISTS orders ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -46,17 +51,18 @@ class SqliteOrderRepository(OrderRepository):
 
     def add(self, order: Order) -> Order:
         created_at = datetime.now().isoformat(timespec="seconds")
-        order.order_no = self._next_order_no(created_at)
-        order.created_at = created_at
-        cursor = self._conn.execute(
-            "INSERT INTO orders (order_no, sample_id, customer_name, qty, status, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (order.order_no, order.sample_id, order.customer_name, order.qty,
-             order.status.value, order.created_at),
-        )
-        self._conn.commit()
-        order.id = cursor.lastrowid
-        return order
+        with self._lock:
+            order.order_no = self._next_order_no(created_at)
+            order.created_at = created_at
+            cursor = self._conn.execute(
+                "INSERT INTO orders (order_no, sample_id, customer_name, qty, status, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (order.order_no, order.sample_id, order.customer_name, order.qty,
+                 order.status.value, order.created_at),
+            )
+            self._conn.commit()
+            order.id = cursor.lastrowid
+            return order
 
     def _next_order_no(self, created_at: str) -> str:
         date_part = created_at[:10].replace("-", "")
@@ -67,36 +73,45 @@ class SqliteOrderRepository(OrderRepository):
         return f"ORD-{date_part}-{count + 1:04d}"
 
     def get(self, order_id: int) -> Order | None:
-        row = self._conn.execute(
-            "SELECT id, order_no, sample_id, customer_name, qty, status, created_at "
-            "FROM orders WHERE id = ?",
-            (order_id,),
-        ).fetchone()
-        return self._to_order(row) if row else None
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT id, order_no, sample_id, customer_name, qty, status, created_at "
+                "FROM orders WHERE id = ?",
+                (order_id,),
+            ).fetchone()
+            return self._to_order(row) if row else None
 
     def list_all(self) -> list[Order]:
-        rows = self._conn.execute(
-            "SELECT id, order_no, sample_id, customer_name, qty, status, created_at FROM orders"
-        ).fetchall()
-        return [self._to_order(row) for row in rows]
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT id, order_no, sample_id, customer_name, qty, status, created_at FROM orders"
+            ).fetchall()
+            return [self._to_order(row) for row in rows]
 
     def list_by_status(self, status: OrderStatus) -> list[Order]:
-        rows = self._conn.execute(
-            "SELECT id, order_no, sample_id, customer_name, qty, status, created_at "
-            "FROM orders WHERE status = ?",
-            (status.value,),
-        ).fetchall()
-        return [self._to_order(row) for row in rows]
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT id, order_no, sample_id, customer_name, qty, status, created_at "
+                "FROM orders WHERE status = ?",
+                (status.value,),
+            ).fetchall()
+            return [self._to_order(row) for row in rows]
 
     def update_status(self, order_id: int, status: OrderStatus) -> Order:
-        cursor = self._conn.execute(
-            "UPDATE orders SET status = ? WHERE id = ?",
-            (status.value, order_id),
-        )
-        self._conn.commit()
-        if cursor.rowcount == 0:
-            raise KeyError(order_id)
-        return self.get(order_id)
+        with self._lock:
+            cursor = self._conn.execute(
+                "UPDATE orders SET status = ? WHERE id = ?",
+                (status.value, order_id),
+            )
+            self._conn.commit()
+            if cursor.rowcount == 0:
+                raise KeyError(order_id)
+            row = self._conn.execute(
+                "SELECT id, order_no, sample_id, customer_name, qty, status, created_at "
+                "FROM orders WHERE id = ?",
+                (order_id,),
+            ).fetchone()
+            return self._to_order(row)
 
     @staticmethod
     def _to_order(row: tuple) -> Order:
