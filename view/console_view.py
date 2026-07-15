@@ -128,7 +128,7 @@ def show_order_list(orders: list) -> None:
 
 
 def prompt_order_selection(count: int) -> int | None:
-    raw = input(f"승인/거절할 번호 (1-{count}) > ")
+    raw = input(f"번호 (1-{count}) > ")
     try:
         return int(raw)
     except ValueError:
